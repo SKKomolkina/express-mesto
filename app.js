@@ -22,6 +22,11 @@ app.use((req, res, next) => {
   next();
 });
 
+module.exports.createCard = (req, res) => {
+  // eslint-disable-next-line no-underscore-dangle
+  console.log(req.user._id);
+};
+
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
 });
