@@ -1,7 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const router = require('./routes/router');
+
+const userRouter = require('./routes/users');
+const cardRouter = require('./routes/cards');
 
 const { PORT = 3000 } = process.env;
 
@@ -12,8 +14,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
-app.use('/', router);
-
 app.use((req, res, next) => {
   req.user = {
     _id: '6137bb46b97e966c55f1d7d9',
@@ -22,11 +22,13 @@ app.use((req, res, next) => {
   next();
 });
 
-module.exports.createCard = (req, res) => {
-  // eslint-disable-next-line no-underscore-dangle
-  console.log(req.user._id);
-};
+// http://localhost:3000/users
+app.use('/users', userRouter);
 
+// http://localhost:3000/cards
+app.use('/cards', cardRouter);
+
+// http://localhost:3000
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
 });

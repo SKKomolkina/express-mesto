@@ -12,7 +12,8 @@ const cardSchema = new mongoose.Schema({
     required: true,
   },
   owner: {
-    driver: mongoose.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'user',
     required: true,
   },
   likes: {
@@ -20,6 +21,7 @@ const cardSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
+    default: Date.now,
   },
 });
 
