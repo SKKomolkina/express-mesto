@@ -1,5 +1,7 @@
 const Card = require('../models/cardSchema');
 const { ERROR_DEFAULT } = require('../constants/errors-constants');
+const ValidationError = require('../constants/ValidationError');
+const DefaultError = require('../constants/DefaultError');
 // const { STATUS_OK } = require('../constants/success-constants');
 
 module.exports.getCards = (req, res) => {
@@ -15,7 +17,15 @@ module.exports.createCard = (req, res) => {
 
   Card.create({ name, link, owner })
     .then((card) => res.status(200).send(card))
-    .catch((error) => res.status(ERROR_DEFAULT).send({ message: `Произошла ошибка ${error.name}` }));
+    .catch((err) => {
+      if (ValidationError) {
+        return res.send({ message: 'Возникла ошибка: введенные данные некорректны.' });
+      }
+      if (DefaultError) {
+        return res.send({ message: `Возникла ошибка: ${DefaultError}` });
+      }
+      return res.send({ message: `${err}` });
+    });
 };
 
 module.exports.deleteCardById = (req, res) => {
@@ -40,8 +50,8 @@ module.exports.likeCard = (req, res) => {
     .catch((error) => res.status(ERROR_DEFAULT).send({ message: `Произошла ошибка ${error.name}` }));
 };
 
-module.exports.dislikeCard = (req, res) => {
-  const { cardId } = req.params;
-
-  Card.findByIdAndUpdate()
-}
+// module.exports.dislikeCard = (req, res) => {
+//   const { cardId } = req.params;
+//
+//   Card.findByIdAndUpdate()
+// }
