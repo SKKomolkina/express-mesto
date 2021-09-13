@@ -1,13 +1,13 @@
 const Card = require('../models/cardSchema');
-const { ERROR_DEFAULT } = require('../constants/errors-constants');
+
+const { ERROR_DEFAULT, ERROR_BAD_REQUEST, ERROR_NOT_FOUND } = require('../constants/errors-constants');
 const ValidationError = require('../constants/ValidationError');
-const DefaultError = require('../constants/DefaultError');
-// const { STATUS_OK } = require('../constants/success-constants');
+const NotFoundError = require('../constants/NotFoundError');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
     .then((cards) => res.status(200).send(cards))
-    .catch((error) => res.status(ERROR_DEFAULT).send({ message: `Произошла ошибка ${error.name}` }));
+    .catch((err) => res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` }));
 };
 
 module.exports.createCard = (req, res) => {
@@ -19,22 +19,25 @@ module.exports.createCard = (req, res) => {
     .then((card) => res.status(200).send(card))
     .catch((err) => {
       if (ValidationError) {
-        return res.send({ message: 'Возникла ошибка: введенные данные некорректны.' });
+        return res.status(ERROR_BAD_REQUEST).send({ message: 'Возникла ошибка: переданные данные некорректны.' });
       }
-      if (DefaultError) {
-        return res.send({ message: `Возникла ошибка: ${DefaultError}` });
-      }
-      return res.send({ message: `${err}` });
+      return res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` });
     });
 };
 
 module.exports.deleteCardById = (req, res) => {
   const { cardId } = req.params;
 
-  // eslint-disable-next-line no-underscore-dangle
-  Card.findByIdAndDelete(cardId)
-    .then((card) => res.status(200).send(card))
-    .catch((error) => res.status(ERROR_DEFAULT).send({ message: `Произошла ошибка ${error.name}` }));
+  Card.findByIdAndRemove(cardId)
+    .then((card) => {
+      res.status(200).send({ card });
+    })
+    .catch((err) => {
+      if (NotFoundError) {
+        return res.status(ERROR_NOT_FOUND).send({ message: `Возникла ошибка: пользователь с указанным ${cardId} не найден.` });
+      }
+      return res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err.name}` });
+    });
 };
 
 module.exports.likeCard = (req, res) => {
@@ -44,14 +47,31 @@ module.exports.likeCard = (req, res) => {
     cardId,
     // eslint-disable-next-line no-underscore-dangle
     { $addToSet: { likes: req.user._id } },
-    { new: true },
+    { new: true, runValidators: true },
   )
     .then((card) => res.status(200).send(card))
-    .catch((error) => res.status(ERROR_DEFAULT).send({ message: `Произошла ошибка ${error.name}` }));
+    .catch((err) => {
+      if (ValidationError) {
+        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: переданные данные некорректны.' });
+      }
+      return res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` });
+    });
 };
 
-// module.exports.dislikeCard = (req, res) => {
-//   const { cardId } = req.params;
-//
-//   Card.findByIdAndUpdate()
-// }
+module.exports.dislikeCard = (req, res) => {
+  const { cardId } = req.params;
+
+  Card.findByIdAndUpdate(
+    cardId,
+    // eslint-disable-next-line no-underscore-dangle
+    { $pull: { likes: req.user._id } },
+    { new: true, runValidators: true },
+  )
+    .then((card) => res.status(200).send(card))
+    .catch((err) => {
+      if (ValidationError) {
+        return res.status(ERROR_BAD_REQUEST).send({ message: 'Возникла ошибка: переданные данные некорректны.' });
+      }
+      return res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` });
+    });
+};

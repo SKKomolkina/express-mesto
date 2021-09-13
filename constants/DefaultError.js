@@ -3,6 +3,6 @@ class DefaultError extends Error {
     super(message);
     this.statusCode = 500;
   }
-};
+}
 
 module.exports = DefaultError;
