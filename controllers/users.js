@@ -1,7 +1,5 @@
 const User = require('../models/userSchema');
 
-const { ERROR_DEFAULT, ERROR_NOT_FOUND, ERROR_BAD_REQUEST } = require('../constants/errors-constants');
-const ValidationError = require('../constants/ValidationError');
 const NotFoundError = require('../constants/NotFoundError');
 
 module.exports.getUsers = (req, res, next) => {

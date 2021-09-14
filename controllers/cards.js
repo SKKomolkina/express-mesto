@@ -1,6 +1,6 @@
 const Card = require('../models/cardSchema');
 
-const { ERROR_DEFAULT, ERROR_BAD_REQUEST, ERROR_NOT_FOUND } = require('../constants/errors-constants');
+const { ERROR_NOT_FOUND } = require('../constants/errors-constants');
 const NotFoundError = require('../constants/NotFoundError');
 
 module.exports.getCards = (req, res, next) => {
@@ -24,7 +24,7 @@ module.exports.deleteCardById = (req, res, next) => {
   Card.findByIdAndRemove(cardId)
     .then((card) => {
       if (card === null) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: карта с указанным ID не найдена.'});
+        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: карта с указанным ID не найдена.' });
       }
       return res.status(200).send(card);
     })
@@ -41,7 +41,7 @@ module.exports.likeCard = (req, res, next) => {
   )
     .then((card) => {
       if (card === null) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: карта с указанным ID не найдена.'});
+        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: карта с указанным ID не найдена.' });
       }
       return res.status(200).send(card);
     })
@@ -63,7 +63,7 @@ module.exports.dislikeCard = (req, res, next) => {
   )
     .then((card) => {
       if (card === null) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: карта с указанным ID не найдена.'});
+        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: карта с указанным ID не найдена.' });
       }
       return res.status(200).send(card);
     })
