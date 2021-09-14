@@ -4,67 +4,50 @@ const { ERROR_DEFAULT, ERROR_NOT_FOUND, ERROR_BAD_REQUEST } = require('../consta
 const ValidationError = require('../constants/ValidationError');
 const NotFoundError = require('../constants/NotFoundError');
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.status(200).send(users))
-    .catch((err) => res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` }));
+    .catch(next);
 };
 
-module.exports.getUserById = (req, res) => {
-  // eslint-disable-next-line no-underscore-dangle
-  User.findById(req.user._id)
-    .then((user) => res.status(200).send(user))
-    .catch((err) => {
-      if (ValidationError) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: переданные данные некорректны.' });
+module.exports.getUserById = (req, res, next) => {
+  User.findOne({ _id: req.params.userId })
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Возникла ошибка: пользователь с указанным ID не найден.');
       }
-      return res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` });
-    });
+      res.status(200).send(user);
+    })
+    .catch(next);
 };
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
     .then((user) => res.status(200).send(user))
-    .catch((err) => {
-      if (NotFoundError) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: переданные данные некорректны.' });
-      }
-      return res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` });
-    });
+    // .then(() => {
+    //   if (!name || !about || !avatar) {
+    //     throw new ValidationError('Возникла ошибка: введенные данные некорректны');
+    //   }
+    // })
+    .catch(next);
 };
 
-module.exports.updateUser = (req, res) => {
+module.exports.updateUser = (req, res, next) => {
   const { name, about } = req.body;
 
-  // eslint-disable-next-line no-underscore-dangle
-  User.findByIdAndUpdate(req.user._id, { name, about })
+  User.findByIdAndUpdate(req.user._id, { name, about },
+    { new: true, runValidators: true })
     .then((user) => res.status(200).send(user))
-    .catch((err) => {
-      if (ValidationError) {
-        return res.status(400).send({ message: 'Введенные данные некорректны.' });
-      }
-      if (NotFoundError) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: переданные данные некорректны.' });
-      }
-      return res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` });
-    });
+    .catch(next);
 };
 
-module.exports.updateAvatar = (req, res) => {
+module.exports.updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
-  // eslint-disable-next-line no-underscore-dangle
-  User.findByIdAndUpdate(req.user._id, { avatar })
+  User.findByIdAndUpdate(req.user._id, { avatar },
+    { new: true, runValidators: true })
     .then((user) => res.status(200).send(user))
-    .catch((err) => {
-      if (ValidationError) {
-        return res.status(ERROR_BAD_REQUEST).send({ message: 'Введенные данные некорректны.' });
-      }
-      if (NotFoundError) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: переданные данные некорректны.' });
-      }
-      return res.status(ERROR_DEFAULT).send({ message: `Возникла ошибка: ${err}` });
-    });
+    .catch(next);
 };
