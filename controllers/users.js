@@ -24,11 +24,6 @@ module.exports.createUser = (req, res, next) => {
 
   User.create({ name, about, avatar })
     .then((user) => res.status(200).send(user))
-    // .then(() => {
-    //   if (!name || !about || !avatar) {
-    //     throw new ValidationError('Возникла ошибка: введенные данные некорректны');
-    //   }
-    // })
     .catch(next);
 };
 
