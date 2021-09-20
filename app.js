@@ -5,6 +5,10 @@ const { errors } = require('celebrate');
 
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
+const {
+  login,
+  createUser,
+} = require('./controllers/users');
 
 const { PORT = 3000 } = process.env;
 
@@ -22,6 +26,12 @@ app.use((req, res, next) => {
 
   next();
 });
+
+// http://localhost:3000/signin
+app.post('/signin', login);
+
+// http://localhost:3000/signup
+app.post('/signup', createUser);
 
 // http://localhost:3000/users
 app.use('/users', userRouter);
