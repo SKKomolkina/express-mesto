@@ -1,40 +1,63 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/userSchema');
+
 const NotFoundError = require('../constants/NotFoundError');
+const ConflictError = require('../constants/ConflictError');
+const DefaultError = require('../constants/DefaultError');
+const ValidationError = require('../constants/ValidationError');
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    throw new ValidationError('Ошибка ввода данных!');
+  }
+
   User.findOne({ email })
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Возникла ошибка: пользователь с указанным email не найден.');
+        throw new NotFoundError('Указанный пользователь не найден.');
       }
-      bcrypt.compare(password, user.password);
-    })
-    .then((matched) => {
-      if (!matched) {
-        throw new NotFoundError('Неправильные почта или пароль!');
-      }
-      res.send({ message: 'Все верно!' });
+
+      bcrypt.compare(password, user.password, (err, result) => {
+        if (err) {
+          throw new DefaultError('Ошибка на сервере.');
+        }
+
+        if (!result) {
+          return res.status(401).send({ message: 'Неправильные почта или пароль.' });
+        }
+
+        return res.send({ user });
+      });
     })
     .catch(next);
 };
 
 module.exports.createUser = (req, res, next) => {
-  // const {
-  //   name, about, avatar, email, password,
-  // } = req.body;
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
 
-  bcrypt.hash(req.body.password, 10)
-    .then((hash) => User.create({
-      name: req.body.name,
-      about: req.body.about,
-      avatar: req.body.avatar,
-      email: req.body.email,
-      password: hash,
-    }))
-    .then((user) => res.status(200).send(user))
+  return User.findOne({ email })
+    .then((mail) => {
+      if (mail) {
+        throw new ConflictError('Такой пользователь уже существует!');
+      }
+
+      bcrypt.hash(password, 10, (err, hash) => {
+        if (err) {
+          throw new DefaultError('Ошибка на сервере.');
+        }
+
+        User.create({
+          name, about, avatar, email, password: hash,
+        })
+          .then((user) => {
+            res.status(200).send(user);
+          });
+      });
+    })
     .catch(next);
 };
 
@@ -48,7 +71,7 @@ module.exports.getUserById = (req, res, next) => {
   User.findOne({ _id: req.params.userId })
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Возникла ошибка: пользователь с указанным ID не найден.');
+        throw new NotFoundError('Пользователь с указанным ID не найден.');
       }
       res.status(200).send(user);
     })
