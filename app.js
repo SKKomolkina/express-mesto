@@ -3,8 +3,11 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { errors } = require('celebrate');
 
+const auth = require('./middlewares/auth');
+
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
+
 const {
   login,
   createUser,
@@ -19,19 +22,13 @@ mongoose.connect('mongodb://localhost:27017/mestodb');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6137bb46b97e966c55f1d7d9',
-  };
-
-  next();
-});
-
 // http://localhost:3000/signin
 app.post('/signin', login);
 
 // http://localhost:3000/signup
 app.post('/signup', createUser);
+
+app.use(auth);
 
 // http://localhost:3000/users
 app.use('/users', userRouter);
@@ -50,6 +47,4 @@ app.use((err, req, res) => {
 });
 
 // http://localhost:3000
-app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`);
-});
+app.listen(PORT);

@@ -1,10 +1,12 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/userSchema');
 
 const NotFoundError = require('../constants/NotFoundError');
 const ConflictError = require('../constants/ConflictError');
 const DefaultError = require('../constants/DefaultError');
 const ValidationError = require('../constants/ValidationError');
+const UnauthorizedError = require('../constants/UnauthorizedError');
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
@@ -13,7 +15,7 @@ module.exports.login = (req, res, next) => {
     throw new ValidationError('Ошибка ввода данных!');
   }
 
-  User.findOne({ email })
+  User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Указанный пользователь не найден.');
@@ -25,10 +27,16 @@ module.exports.login = (req, res, next) => {
         }
 
         if (!result) {
-          return res.status(401).send({ message: 'Неправильные почта или пароль.' });
+          throw new UnauthorizedError('Необходимо авторизоваться!');
         }
 
-        return res.send({ user });
+        const token = jwt.sign(
+          { _id: user._id },
+          'meow',
+          { expiresIn: '7d' },
+        );
+
+        return res.send({ token });
       });
     })
     .catch(next);

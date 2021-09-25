@@ -1,8 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
 const isEmail = require('validator/lib/isEmail');
-
-const NotFoundError = require('../constants/NotFoundError');
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -17,6 +14,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+    select: false,
   },
   name: {
     type: String,
