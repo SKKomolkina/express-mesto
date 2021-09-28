@@ -18,7 +18,7 @@ module.exports.login = (req, res, next) => {
   User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Указанный пользователь не найден.');
+        throw new UnauthorizedError('Неверная почта или пароль.');
       }
 
       bcrypt.compare(password, user.password, (err, result) => {
@@ -62,7 +62,10 @@ module.exports.createUser = (req, res, next) => {
           name, about, avatar, email, password: hash,
         })
           .then((user) => {
-            res.status(200).send(user);
+            res.status(200).send({
+              id: user._id,
+              email: user.email,
+            });
           });
       });
     })

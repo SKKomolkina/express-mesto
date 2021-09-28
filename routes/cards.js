@@ -1,21 +1,48 @@
 const router = require('express').Router();
+
 const { celebrate, Joi } = require('celebrate');
+const validator = require('validator');
+
 const {
   getCards, createCard, deleteCardById, likeCard, dislikeCard,
 } = require('../controllers/cards');
 
-router.get('/', getCards);
+const validateUrl = (value) => {
+  const result = validator.isURL(value);
+  if (result) {
+    return value;
+  }
+  throw new Error('Введена некорректная ссылка.');
+};
 
-router.post('/', celebrate({
+// http://localhost:3000/cards
+router.get('/cards', getCards);
+router.post('/cards', celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required(),
+    link: Joi.string().required().custom(validateUrl),
   }),
 }), createCard);
 
-router.delete('/:cardId', deleteCardById);
-router.delete('/:cardId/likes', dislikeCard);
+// http://localhost:3000/cards/:cardId
+router.delete('/cards/:cardId', celebrate({
+  params: Joi.object().keys({
+    cardId: Joi.object().keys({
+      cardId: Joi.string().required().hex().length(24),
+    }),
+  }),
+}), deleteCardById);
 
-router.put('/:cardId/likes', likeCard);
+// http://localhost:3000/cards/:cardId/likes
+router.delete('/cards/:cardId/likes', celebrate({
+  params: Joi.object().keys({
+    cardId: Joi.string().required().hex().length(24),
+  }),
+}), dislikeCard);
+router.put('/cards/:cardId/likes', celebrate({
+  params: Joi.object().keys({
+    cardId: Joi.string().required().hex().length(24),
+  }),
+}), likeCard);
 
 module.exports = router;

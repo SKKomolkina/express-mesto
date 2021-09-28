@@ -34,7 +34,7 @@ app.use(auth);
 app.use('/users', userRouter);
 
 // http://localhost:3000/cards
-app.use('/cards', cardRouter);
+app.use('/', cardRouter);
 
 app.use('*', (req, res) => res.status(400).send({ message: 'Страница не найдена.' }));
 
