@@ -34,16 +34,17 @@ app.use(auth);
 app.use('/users', userRouter);
 
 // http://localhost:3000/cards
-app.use('/', cardRouter);
+app.use('/cards', cardRouter);
 
-app.use('*', (req, res) => res.status(400).send({ message: 'Страница не найдена.' }));
+app.use('*', (req, res) => res.status(404).send({ message: 'Страница не найдена.' }));
 
 app.use(errors());
 
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   const { statusCode = 500, message } = err;
 
   res.status(statusCode).send({ message: statusCode === 500 ? 'На сервере произошла ошибка' : message });
+  next();
 });
 
 // http://localhost:3000
