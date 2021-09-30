@@ -21,23 +21,20 @@ module.exports.login = (req, res, next) => {
         throw new UnauthorizedError('Неверная почта или пароль.');
       }
 
-      bcrypt.compare(password, user.password, (err, result) => {
-        if (err) {
-          throw new DefaultError('Ошибка на сервере.');
-        }
+      bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            throw new UnauthorizedError('Неверная почта или пароль!');
+          }
+          const token = jwt.sign(
+            { _id: user._id },
+            'meow',
+            { expiresIn: '7d' },
+          );
 
-        if (!result) {
-          throw new UnauthorizedError('Необходимо авторизоваться!');
-        }
-
-        const token = jwt.sign(
-          { _id: user._id },
-          'meow',
-          { expiresIn: '7d' },
-        );
-
-        return res.send({ token });
-      });
+          res.send({ token });
+        })
+        .catch(next);
     })
     .catch(next);
 };
