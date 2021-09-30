@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userSchema');
@@ -26,9 +28,11 @@ module.exports.login = (req, res, next) => {
           if (!matched) {
             throw new UnauthorizedError('Неверная почта или пароль!');
           }
+          const { NODE_ENV, JWT_SECRET } = process.env;
+
           const token = jwt.sign(
             { _id: user._id },
-            'meow',
+            NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret',
             { expiresIn: '7d' },
           );
 
