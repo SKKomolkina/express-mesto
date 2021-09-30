@@ -25,10 +25,19 @@ const validateEmail = (value) => {
   throw new Error('Введена некорректная почта.');
 };
 
+const validateUrl = (value) => {
+  const result = validator.isURL(value);
+  if (result) {
+    return value;
+  }
+  throw new Error('Введена некорректная ссылка.');
+};
+
 const {
   login,
   createUser,
 } = require('./controllers/users');
+const NotFoundError = require('./constants/NotFoundError');
 
 const { PORT = 3000 } = process.env;
 
@@ -52,6 +61,9 @@ app.post('/signup', celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().custom(validateEmail),
     password: Joi.string().required(),
+    name: Joi.string().min(2).max(30),
+    about: Joi.string().min(2).max(30),
+    avatar: Joi.string().custom(validateUrl),
   }),
 }), createUser);
 
@@ -63,10 +75,10 @@ app.use('/', userRouter);
 // http://localhost:3000/cards
 app.use('/', cardRouter);
 
-app.use('*', (req, res) => res.status(401).send({ message: 'Страница не найдена.' }));
-
+app.use('*', () => {
+  throw new NotFoundError('Страница не найдена!');
+});
 app.use(errors());
-
 app.use(error);
 
 // http://localhost:3000

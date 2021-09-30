@@ -1,8 +1,8 @@
 const Card = require('../models/cardSchema');
 
-const { ERROR_NOT_FOUND } = require('../constants/errors-constants');
 const NotFoundError = require('../constants/NotFoundError');
 const UnauthorizedError = require('../constants/UnauthorizedError');
+const ValidationError = require('../constants/ValidationError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
@@ -23,21 +23,20 @@ module.exports.deleteCardById = (req, res, next) => {
   const { cardId } = req.params;
   const owner = req.user._id;
 
-  Card.findById(cardId)
-    .then((card) => {
-      if (!card) {
-        throw new NotFoundError('Возникла ошибка: карта с указанным ID не найдена.');
+  Card.findByIdAndRemove(cardId)
+    .then((data) => {
+      if (!data) {
+        next(new NotFoundError('Возникла ошибка: карта с указанным ID не найдена.'));
       }
-
-      if (owner !== String(card.owner)) {
-        throw new UnauthorizedError('Вы не можете удалить чужую карточку!');
+      if (owner !== String(data.owner)) {
+        next(new UnauthorizedError('Вы не можете удалить чужую карточку!'));
       }
-
-      return Card.findByIdAndRemove(cardId)
-        .then((data) => {
-          res.status(200).send(data);
-        })
-        .catch(next);
+      res.status(200).send(data);
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        throw new ValidationError('Переданы некорректные данные');
+      }
     })
     .catch(next);
 };
@@ -51,14 +50,14 @@ module.exports.likeCard = (req, res, next) => {
     { new: true, runValidators: true },
   )
     .then((card) => {
-      if (card === null) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: карта с указанным ID не найдена.' });
+      if (!card) {
+        next(new NotFoundError('Возникла ошибка: карта с указанным ID не найдена.'));
       }
       return res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new NotFoundError('Возникла ошибка: карта с указанным ID не найдена.');
+        throw new ValidationError('Возникла ошибка: карта с указанным ID не найдена.');
       }
     })
     .catch(next);
@@ -73,14 +72,14 @@ module.exports.dislikeCard = (req, res, next) => {
     { new: true, runValidators: true },
   )
     .then((card) => {
-      if (card === null) {
-        return res.status(ERROR_NOT_FOUND).send({ message: 'Возникла ошибка: карта с указанным ID не найдена.' });
+      if (!card) {
+        next(new NotFoundError('Возникла ошибка: карта с указанным ID не найдена.'));
       }
       return res.status(200).send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        throw new NotFoundError('Возникла ошибка: карта с указанным ID не найдена.');
+        throw new ValidationError('Возникла ошибка: карта с указанным ID не найдена.');
       }
     })
     .catch(next);
